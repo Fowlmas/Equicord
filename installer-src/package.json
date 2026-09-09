@@ -1,0 +1,41 @@
+{
+    "name": "equicord-installer",
+    "private": true,
+    "version": "1.0.0",
+    "description": "Standalone installer for Equicord",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "dist": "electron-builder --win"
+    },
+    "devDependencies": {
+        "electron": "^33.0.0",
+        "electron-builder": "^25.1.8"
+    },
+    "build": {
+        "appId": "com.equicord.installer",
+        "productName": "Equicord Installer",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "main.js",
+            "preload.js",
+            "index.html",
+            "package.json",
+            "assets/images/*"
+        ],
+        "extraResources": [
+            {
+                "from": "../dist/desktop",
+                "to": "equicord-dist"
+            }
+        ],
+        "win": {
+            "target": "portable"
+        },
+        "portable": {
+            "artifactName": "Equicord-Installer.exe"
+        }
+    }
+}
