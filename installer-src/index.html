@@ -1,125 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Equicord Installer</title>
-<style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        font-family: "Segoe UI", system-ui, sans-serif;
-        background: #0c0d10;
-        color: #dbdee1;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        user-select: none;
-    }
+    <meta charset="UTF-8">
+    <title>Equicord Installer</title>
+    <style>
+        :root {
+            color-scheme: dark;
+        }
 
-    .titlebar {
-        -webkit-app-region: drag;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 12px;
-        font-size: 13px;
-        font-weight: 600;
-        color: #949ba4;
-    }
-    .titlebar .title { color: #5865f2; }
-    .titlebar .win-controls { -webkit-app-region: no-drag; display: flex; gap: 4px; }
-    .titlebar button {
-        width: 28px; height: 24px;
-        border: none; border-radius: 4px;
-        background: transparent; color: #949ba4;
-        cursor: pointer; font-size: 14px;
-    }
-    .titlebar button:hover { background: #23242a; color: #fff; }
-    .titlebar button.close:hover { background: #da373c; color: #fff; }
+        * {
+            box-sizing: border-box;
+        }
 
-    .content { flex: 1; padding: 4px 24px 0; overflow: hidden; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: #0c0d10;
+            color: #dbdee1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
 
-    .page { display: none; height: 100%; flex-direction: column; }
-    .page.active { display: flex; }
+        .titlebar {
+            -webkit-app-region: drag;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #949ba4;
+        }
 
-    h2 {
-        display: flex; align-items: center; gap: 8px;
-        font-size: 15px; margin: 4px 0 16px; color: #fff;
-    }
-    h2 svg { flex-shrink: 0; color: #5865f2; }
+        .titlebar .title {
+            color: #5865f2;
+        }
 
-    .row-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .titlebar .win-controls {
+            -webkit-app-region: no-drag;
+            display: flex;
+            gap: 4px;
+        }
 
-    .action-row, .channel-row {
-        display: flex; align-items: center; gap: 12px;
-        padding: 12px 14px;
-        border-radius: 8px;
-        border: 1.5px solid #26272c;
-        background: #17181c;
-        cursor: pointer;
-        transition: all .12s;
-    }
-    .action-row:hover { border-color: #3a3c42; }
-    .action-row.selected { border-color: #5865f2; background: rgba(88,101,242,0.12); }
-    .action-row svg { flex-shrink: 0; color: #dbdee1; }
-    .action-row.selected svg { color: #5865f2; }
-    .action-row span { font-size: 13px; font-weight: 600; }
+        .titlebar button {
+            width: 28px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: #949ba4;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
-    .channel-row {
-        cursor: pointer;
-    }
-    .channel-row.selected { border-color: #5865f2; background: rgba(88,101,242,0.12); }
-    .channel-row:not(.found) { cursor: not-allowed; opacity: .6; }
-    .channel-row .icon {
-        width: 32px; height: 32px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-    }
-    .channel-row .icon img { width: 32px; height: 32px; border-radius: 8px; }
-    .channel-row .info { flex: 1; min-width: 0; }
-    .channel-row .info .label { font-size: 13px; font-weight: 600; }
-    .channel-row .info .path { font-size: 11px; color: #949ba4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .channel-row.found .info .path { color: #3ba55c; }
-    .channel-row button {
-        flex-shrink: 0; padding: 6px 12px; font-size: 12px; font-weight: 600;
-        border: none; border-radius: 6px; background: #2b2d31; color: #dbdee1; cursor: pointer;
-    }
-    .channel-row button:hover { background: #3a3c42; }
+        .titlebar button:hover {
+            background: #23242a;
+            color: #fff;
+        }
 
-    #log {
-        flex: 1;
-        background: #111214;
-        border-radius: 6px;
-        padding: 10px 12px;
-        font-family: Consolas, monospace;
-        font-size: 12px;
-        white-space: pre-wrap;
-        overflow-y: auto;
-        color: #b5bac1;
-    }
+        .titlebar button.close:hover {
+            background: #da373c;
+            color: #fff;
+        }
 
-    .footer {
-        -webkit-app-region: no-drag;
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 14px 24px 18px;
-    }
-    .footer .socials { display: flex; gap: 10px; color: #4e5058; }
-    .footer .nav { display: flex; gap: 8px; }
-    .footer button {
-        padding: 9px 20px; border: none; border-radius: 6px;
-        font-size: 13px; font-weight: 600; cursor: pointer;
-    }
-    #backBtn { background: #2b2d31; color: #dbdee1; }
-    #backBtn:hover:not(:disabled) { background: #3a3c42; }
-    #nextBtn { background: #5865f2; color: #fff; }
-    #nextBtn:hover:not(:disabled) { opacity: .9; }
-    .footer button:disabled { opacity: .4; cursor: not-allowed; }
+        .content {
+            flex: 1;
+            padding: 4px 24px 0;
+            overflow: hidden;
+        }
 
-    .warning { font-size: 11px; color: #f0b232; margin-top: 8px; }
-</style>
+        .page {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            margin: 4px 0 16px;
+            color: #fff;
+        }
+
+        h2 svg {
+            flex-shrink: 0;
+            color: #5865f2;
+        }
+
+        .row-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .action-row,
+        .channel-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #26272c;
+            background: #17181c;
+            cursor: pointer;
+            transition: all .12s;
+        }
+
+        .action-row:hover {
+            border-color: #3a3c42;
+        }
+
+        .action-row.selected {
+            border-color: #5865f2;
+            background: rgba(88, 101, 242, 0.12);
+        }
+
+        .action-row svg {
+            flex-shrink: 0;
+            color: #dbdee1;
+        }
+
+        .action-row.selected svg {
+            color: #5865f2;
+        }
+
+        .action-row span {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .channel-row {
+            cursor: pointer;
+        }
+
+        .channel-row.selected {
+            border-color: #5865f2;
+            background: rgba(88, 101, 242, 0.12);
+        }
+
+        .channel-row:not(.found) {
+            cursor: not-allowed;
+            opacity: .6;
+        }
+
+        .channel-row .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .channel-row .icon img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+        }
+
+        .channel-row .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .channel-row .info .label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .channel-row .info .path {
+            font-size: 11px;
+            color: #949ba4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .channel-row.found .info .path {
+            color: #3ba55c;
+        }
+
+        .channel-row button {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: #2b2d31;
+            color: #dbdee1;
+            cursor: pointer;
+        }
+
+        .channel-row button:hover {
+            background: #3a3c42;
+        }
+
+        #log {
+            flex: 1;
+            background: #111214;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            color: #b5bac1;
+        }
+
+        .footer {
+            -webkit-app-region: no-drag;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px 18px;
+        }
+
+        .footer .socials {
+            display: flex;
+            gap: 10px;
+            color: #4e5058;
+        }
+
+        .footer .nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .footer button {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #backBtn {
+            background: #2b2d31;
+            color: #dbdee1;
+        }
+
+        #backBtn:hover:not(:disabled) {
+            background: #3a3c42;
+        }
+
+        #nextBtn {
+            background: #5865f2;
+            color: #fff;
+        }
+
+        #nextBtn:hover:not(:disabled) {
+            opacity: .9;
+        }
+
+        .footer button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        .warning {
+            font-size: 11px;
+            color: #f0b232;
+            margin-top: 8px;
+        }
+    </style>
 </head>
+
 <body>
     <div class="titlebar">
         <span><span class="title">Equicord</span> Installer</span>
@@ -132,20 +291,37 @@
     <div class="content">
         <section class="page active" id="page-action">
             <h2>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9" />
+                </svg>
                 Choose an Action
             </h2>
             <div class="row-list">
                 <div class="action-row" data-action="install">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                     <span>Install Equicord</span>
                 </div>
                 <div class="action-row" data-action="repair">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
                     <span>Repair Equicord</span>
                 </div>
                 <div class="action-row" data-action="uninstall">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
                     <span>Uninstall Equicord</span>
                 </div>
             </div>
@@ -153,7 +329,9 @@
 
         <section class="page" id="page-channels">
             <h2>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5" />
+                </svg>
                 Choose Discord Versions
             </h2>
             <div class="row-list" id="channelList"></div>
@@ -161,11 +339,13 @@
 
         <section class="page" id="page-run">
             <h2>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+                </svg>
                 <span id="runTitle">Working...</span>
             </h2>
             <div id="log">Ready.</div>
-            <p class="warning">Do not run this as Administrator. Discord will be closed and reopened automatically.</p>
+            <p class="warning">Discord will be closed and reopened automatically.</p>
         </section>
     </div>
 
@@ -289,5 +469,5 @@
         showPage(0);
     </script>
 </body>
-</html>
 
+</html>

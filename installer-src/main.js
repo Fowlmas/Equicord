@@ -5,7 +5,7 @@ const { execFileSync, execSync } = require("child_process");
 // original-fs bypasses Electron's automatic asar interception, which otherwise
 // opens and caches a handle on any "app.asar" path we merely stat/check for
 // existence — that cached handle then blocks Equilotl from patching it.
-const { createWriteStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } = require("original-fs");
+const { createWriteStream, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } = require("original-fs");
 const { join } = require("path");
 const { Readable } = require("stream");
 const { finished } = require("stream/promises");
@@ -20,6 +20,12 @@ const ETAG_FILE = join(CACHE_DIR, "etag.txt");
 const BUNDLED_DIST_DIR = app.isPackaged
     ? join(process.resourcesPath, "equicord-dist")
     : join(__dirname, "..", "dist", "desktop");
+
+// Portable .exe builds self-extract to a random %TEMP% folder on every run, so
+// process.resourcesPath (and BUNDLED_DIST_DIR above) is NOT stable across runs.
+// Discord's patched index.js hardcodes whatever path we hand it here, so it
+// must point somewhere permanent, or it breaks the moment the installer closes.
+const STABLE_DIST_DIR = join(app.getPath("userData"), "equicord-dist");
 
 // ── Discord install detection (Windows) ─────────────────────────────────────
 const CHANNELS = {
@@ -181,6 +187,10 @@ async function runAction(action, log, locationPath) {
         throw new Error(`Bundled build not found at ${BUNDLED_DIST_DIR}. This installer was not packaged correctly.`);
     }
 
+    log("Copying bundled build to a permanent location...");
+    rmSync(STABLE_DIST_DIR, { recursive: true, force: true });
+    cpSync(BUNDLED_DIST_DIR, STABLE_DIST_DIR, { recursive: true });
+
     const bin = await ensureEquilotl(log);
     mkdirSync(USER_DATA_DIR, { recursive: true });
 
@@ -195,7 +205,7 @@ async function runAction(action, log, locationPath) {
         env: {
             ...process.env,
             EQUICORD_USER_DATA_DIR: USER_DATA_DIR,
-            EQUICORD_DIRECTORY: BUNDLED_DIST_DIR,
+            EQUICORD_DIRECTORY: STABLE_DIST_DIR,
             EQUICORD_DEV_INSTALL: "1"
         }
     });
