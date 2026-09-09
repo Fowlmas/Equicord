@@ -9,6 +9,9 @@ node_modules
 vencord_installer
 equicord_installer
 
+installer-src/release
+installer-src/test-userdata
+
 .idea
 .DS_Store
 
