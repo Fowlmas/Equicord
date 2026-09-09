@@ -11,7 +11,7 @@ import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User, VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import { Menu, React, RelationshipStore, UserStore, VoiceStateStore } from "@webpack/common";
+import { Menu, React, RelationshipStore, Toasts, UserStore, VoiceStateStore } from "@webpack/common";
 
 type TFollowedUserInfo = {
     lastChannelId: string;
@@ -27,6 +27,14 @@ interface UserContextProps {
 let followedUserInfo: TFollowedUserInfo = null;
 
 const voiceChannelAction = findByPropsLazy("selectVoiceChannel");
+
+function FollowVoiceUserIcon({ filled = false }: { filled?: boolean; }) {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? "var(--status-positive)" : "currentColor"}>
+            <path d="M12 3a9 9 0 0 0-9 9v6.5A2.5 2.5 0 0 0 5.5 21H7a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5v-1a7 7 0 0 1 14 0v1h-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h1.5a2.5 2.5 0 0 0 2.5-2.5V12a9 9 0 0 0-9-9Z" />
+        </svg>
+    );
+}
 
 const settings = definePluginSettings({
     onlyWhenInVoice: {
@@ -45,17 +53,21 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
     if (UserStore.getCurrentUser().id === user.id || !RelationshipStore.getFriendIDs().includes(user.id)) return;
 
     const [checked, setChecked] = React.useState(followedUserInfo?.userId === user.id);
+    const followIcon = () => <FollowVoiceUserIcon filled={checked} />;
 
     children.push(
         <Menu.MenuSeparator />,
-        <Menu.MenuCheckboxItem
+        <Menu.MenuItem
             id="fvu-follow-user"
-            label="Follow User"
-            checked={checked}
+            label={checked ? "Stop Following User" : "Follow User"}
+            color={checked ? "danger" : undefined}
+            icon={followIcon}
+            leadingAccessory={{ type: "icon", icon: followIcon }}
             action={() => {
                 if (followedUserInfo?.userId === user.id) {
                     followedUserInfo = null;
                     setChecked(false);
+                    Toasts.show({ message: `Stopped following ${user.globalName ?? user.username}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
                     return;
                 }
 
@@ -64,8 +76,9 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                     userId: user.id
                 };
                 setChecked(true);
+                Toasts.show({ message: `Following ${user.globalName ?? user.username} 🏃‍♂️`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
             }}
-        ></Menu.MenuCheckboxItem>
+        ></Menu.MenuItem>
     );
 };
 
