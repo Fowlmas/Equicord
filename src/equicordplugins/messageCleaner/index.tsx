@@ -6,6 +6,7 @@
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, Message } from "@vencord/discord-types";
 import { ChannelStore, Menu, PermissionsBits, PermissionStore, RestAPI, UserStore } from "@webpack/common";
@@ -487,7 +488,7 @@ const ChannelContextMenuPatch: NavContextMenuPatchCallback = (children, ctx: { c
 export default definePlugin({
     name: "MessageCleaner",
     description: "Cleans all your messages (or messages mentioning you) in a channel, with smart rate limiting and progress stats.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["ContextMenuAPI"],
     settings,
 

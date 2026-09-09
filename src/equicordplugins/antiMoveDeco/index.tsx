@@ -5,6 +5,7 @@
  */
 
 import { UserAreaButton } from "@api/UserArea";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { FluxDispatcher, React, SelectedChannelStore, UserStore, useStateFromStores } from "@webpack/common";
@@ -83,7 +84,7 @@ function AntiMoveDecoButton() {
 export default definePlugin({
     name: "AntiMoveDeco",
     description: "Adds a button to prevent being moved or disconnected from a voice channel.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["UserAreaAPI"],
 
     userAreaButton: {

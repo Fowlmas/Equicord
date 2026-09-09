@@ -7,6 +7,7 @@
 import "./styles.css";
 
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, Forms, IconUtils, MessageStore, Modal, openModal, useEffect, UserStore, useState } from "@webpack/common";
@@ -450,7 +451,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
                         const isSel = selected.has(c.id);
                         return (
                             <div key={c.id}
-                                className={`edm-channel-row ${isSel ? "edm-channel-row--selected" : ""}`}
+                                className={`edm-channel-row ${isSel ? "edm-channel-row-selected" : ""}`}
                                 onClick={() => toggleSelected(c.id)}>
                                 {av
                                     ? <img src={av} className="edm-avatar" alt="" />
@@ -482,7 +483,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
                 <div className="edm-format-row">
                     {FORMATS.map(f => (
                         <button key={f.key}
-                            className={`edm-format-btn ${format === f.key ? "edm-format-btn--active" : ""}`}
+                            className={`edm-format-btn ${format === f.key ? "edm-format-btn-active" : ""}`}
                             onClick={() => setFormat(f.key)}
                             title={f.desc}>
                             <span className="edm-fmt-key">{f.label}</span>
@@ -492,7 +493,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
                 </div>
 
                 {status !== "idle" && (
-                    <div className={`edm-status edm-status--${status}`}>{progress}</div>
+                    <div className={`edm-status edm-status-${status}`}>{progress}</div>
                 )}
 
                 <button className="edm-export-btn"
@@ -518,7 +519,7 @@ function ExportButton() {
 export default definePlugin({
     name: "ExportDM",
     description: "Exports your DMs with messages, images, videos, audio, links, embeds, stickers and reactions to TXT/JSON/CSV/MD/HTML.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["HeaderBarAPI"],
 
     start() { addHeaderBarButton("equicord-export-dm", () => <ExportButton />, 4); },

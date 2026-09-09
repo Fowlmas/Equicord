@@ -706,6 +706,14 @@ export const EquicordDevs = Object.freeze({
         name: "heart_menace",
         id: 281162701303185408n
     },
+    Fowlmas: {
+        name: "fwl'",
+        id: 1034860498354704445n
+    },
+    mushzi: {
+        name: "mushzi",
+        id: 449282863582412850n
+    },
     thororen: {
         name: "thororen",
         id: 848339671629299742n
