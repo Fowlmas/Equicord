@@ -7,6 +7,7 @@
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { ChannelStore, Constants, Menu, PermissionsBits, PermissionStore, React, RestAPI, Toasts, useEffect, UserStore, useState } from "@webpack/common";
@@ -136,7 +137,7 @@ const ctxPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "FollowMe",
     description: "Forces a user to follow you in voice channels (requires Move Members permission). Right-click a user → Follow Me.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["ContextMenuAPI", "HeaderBarAPI"],
 
     headerBarButton: {

@@ -6,6 +6,7 @@
 
 import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, Menu, React, SelectedChannelStore, useStateFromStores, VoiceActions } from "@webpack/common";
 
@@ -103,7 +104,7 @@ function FakeDeafenUserButton({ iconForeground, hideTooltips, nameplate }: UserA
 export default definePlugin({
     name: "FakeVoice",
     description: "Appear muted or deafened in voice chat without actually being muted or deafened.",
-    authors: [{ name: "mushzi", id: 449282863582412850n }],
+    authors: [EquicordDevs.mushzi],
     dependencies: ["CommandsAPI", "UserAreaAPI"],
 
     patches: [

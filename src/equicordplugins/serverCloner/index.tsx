@@ -10,6 +10,7 @@ import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatc
 import { definePluginSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Button, Forms, GuildStore, IconUtils, Menu, Modal, openModal, React, RestAPI, Select, Toasts, useMemo, useRef, UserStore, useState } from "@webpack/common";
@@ -645,7 +646,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ServerCloner",
     description: "Clones an entire server (channels, roles, permissions, icon, emojis, bot embeds) to a server where you have ADMIN permission. Opens from the server context menu.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["ContextMenuAPI"],
     settings,
     start() {

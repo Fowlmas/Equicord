@@ -7,6 +7,7 @@
 import "./styles.css";
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { ChannelStore, FluxDispatcher, IconUtils, React, ReactDOM, SelectedChannelStore, UserStore } from "@webpack/common";
 
@@ -289,7 +290,7 @@ function UserAvatar({ user }: { user: any; }) {
     const [err, setErr] = React.useState(false);
     if (!user) return null;
     const url = avatarUrl(user);
-    if (err || !url) return <div className="fdm-sender-avatar fdm-sender-avatar--ph">{user.username?.[0]?.toUpperCase() ?? "?"}</div>;
+    if (err || !url) return <div className="fdm-sender-avatar fdm-sender-avatar-ph">{user.username?.[0]?.toUpperCase() ?? "?"}</div>;
     return <img src={url} className="fdm-sender-avatar" alt="" onError={() => setErr(true)} />;
 }
 
@@ -397,10 +398,10 @@ function FakeDMPanel({ onClose, btnRect }: { onClose(): void; btnRect: DOMRect; 
         <MemberSelect members={members} value={senderId} onChange={setSenderId} label="From:" />
     ) : (
         <div className="fdm-sender-row">
-            <button className={`fdm-sender-btn${senderId === me?.id ? " fdm-sender-btn--active" : ""}`} onClick={() => setSenderId(me?.id ?? "")}>
+            <button className={`fdm-sender-btn${senderId === me?.id ? " fdm-sender-btn-active" : ""}`} onClick={() => setSenderId(me?.id ?? "")}>
                 <UserAvatar user={me} /><span className="fdm-sender-name">{meName}</span>
             </button>
-            <button className={`fdm-sender-btn${senderId !== me?.id ? " fdm-sender-btn--active" : ""}`} onClick={() => setSenderId(other?.id ?? "")}>
+            <button className={`fdm-sender-btn${senderId !== me?.id ? " fdm-sender-btn-active" : ""}`} onClick={() => setSenderId(other?.id ?? "")}>
                 <UserAvatar user={other} /><span className="fdm-sender-name">{otherName}</span>
             </button>
         </div>
@@ -413,10 +414,10 @@ function FakeDMPanel({ onClose, btnRect }: { onClose(): void; btnRect: DOMRect; 
         </>
     ) : (
         <div className="fdm-sender-row">
-            <button className={`fdm-sender-btn${callerId === me?.id ? " fdm-sender-btn--active" : ""}`} onClick={() => { setCallerId(me?.id ?? ""); setCallReceiverId(other?.id ?? ""); }}>
+            <button className={`fdm-sender-btn${callerId === me?.id ? " fdm-sender-btn-active" : ""}`} onClick={() => { setCallerId(me?.id ?? ""); setCallReceiverId(other?.id ?? ""); }}>
                 <UserAvatar user={me} /><span className="fdm-sender-name">{meName}</span>
             </button>
-            <button className={`fdm-sender-btn${callerId !== me?.id ? " fdm-sender-btn--active" : ""}`} onClick={() => { setCallerId(other?.id ?? ""); setCallReceiverId(me?.id ?? ""); }}>
+            <button className={`fdm-sender-btn${callerId !== me?.id ? " fdm-sender-btn-active" : ""}`} onClick={() => { setCallerId(other?.id ?? ""); setCallReceiverId(me?.id ?? ""); }}>
                 <UserAvatar user={other} /><span className="fdm-sender-name">{otherName}</span>
             </button>
         </div>
@@ -505,7 +506,7 @@ function FakeDMPanel({ onClose, btnRect }: { onClose(): void; btnRect: DOMRect; 
                     </>
                 )}
 
-                <div className={`fdm-status${status ? (status.ok ? " fdm-status--ok" : " fdm-status--err") : ""}`}>
+                <div className={`fdm-status${status ? (status.ok ? " fdm-status-ok" : " fdm-status-err") : ""}`}>
                     {status?.msg ?? "\u00a0"}
                 </div>
             </div>
@@ -553,7 +554,7 @@ export default definePlugin({
     name: "FakeDM",
     enabledByDefault: false,
     description: "Injects fake local messages or calls into a DM or group DM via a chat bar button. Persists across restarts.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     dependencies: ["ChatInputButtonAPI"],
 
     chatBarButton: {

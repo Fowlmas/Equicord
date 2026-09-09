@@ -8,6 +8,7 @@ import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
 import { FluxDispatcher, Parser, React, useStateFromStores } from "@webpack/common";
@@ -177,7 +178,7 @@ const LastSeenSection = ErrorBoundary.wrap(
 export default definePlugin({
     name: "LastSeen",
     description: "Shows the last time a user was seen online, in their profile.",
-    authors: [{ name: "fwl'", id: 1034860498354704445n }],
+    authors: [EquicordDevs.Fowlmas],
     settings,
 
     patches: [
