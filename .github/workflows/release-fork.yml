@@ -1,0 +1,78 @@
+name: Release Fork Build
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+env:
+    FORCE_COLOR: true
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        name: Build and publish latest release
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+
+            - name: Use Node.js 24
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build web
+              run: pnpm buildWebStandalone
+
+            - name: Build desktop/equibop
+              run: pnpm buildStandalone
+
+            - name: Generate plugin lists
+              run: |
+                  pnpm generatePluginJson dist/plugins.json
+                  pnpm generateEquicordPluginJson dist/equicordplugins.json
+                  pnpm generateVencordPluginJson dist/vencordplugins.json
+                  pnpm generateDevsList dist/devs.json
+
+            - name: Collect files to be released
+              run: |
+                  cd dist
+                  mkdir release
+
+                  cp browser/browser.* release
+                  cp Equicord.user.{js,js.LEGAL.txt} release
+                  cp *.{json,zip,asar} release
+
+                  cp desktop/* release
+                  for file in equibop/*; do
+                    filename=$(basename "$file")
+                    cp "$file" "release/equibop${filename^}"
+                  done
+
+                  find release -size 0 -delete
+                  rm -f release/package.json
+                  rm -f release/*.map
+
+            - name: Ensure "latest" release exists
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh release view latest || gh release create latest \
+                    --title "Latest" \
+                    --notes "Automatic build, always up to date with the ${{ github.ref_name }} branch." \
+                    --target ${{ github.sha }}
+
+            - name: Upload build to release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: gh release upload latest --clobber dist/release/*
