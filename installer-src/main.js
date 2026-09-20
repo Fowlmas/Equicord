@@ -17,15 +17,22 @@ const ETAG_FILE = join(CACHE_DIR, "etag.txt");
 
 // Bundled build of Equicord: packaged next to the app in production,
 // falls back to the repo's own dist/ folder when run unpacked for testing.
-const BUNDLED_DIST_DIR = app.isPackaged
-    ? join(process.resourcesPath, "equicord-dist")
-    : join(__dirname, "..", "dist", "desktop");
+const BUNDLED_ASAR = app.isPackaged
+    ? join(process.resourcesPath, "equicord.asar")
+    : join(__dirname, "..", "dist", "desktop.asar");
 
 // Portable .exe builds self-extract to a random %TEMP% folder on every run, so
-// process.resourcesPath (and BUNDLED_DIST_DIR above) is NOT stable across runs.
+// process.resourcesPath (and BUNDLED_ASAR above) is NOT stable across runs.
 // Discord's patched index.js hardcodes whatever path we hand it here, so it
 // must point somewhere permanent, or it breaks the moment the installer closes.
-const STABLE_DIST_DIR = join(app.getPath("userData"), "equicord-dist");
+// It also has to stay a single .asar file: the in-app updater applies updates
+// by overwriting this exact path, which is impossible on a directory.
+const STABLE_ASAR = join(app.getPath("userData"), "equicord.asar");
+
+// Loose file layout used before the switch to the asar. The in-app updater can
+// never write to it, so installs still pointing here are stuck on the version
+// the installer shipped with.
+const LEGACY_DIST_DIR = join(app.getPath("userData"), "equicord-dist");
 
 // ── Discord install detection (Windows) ─────────────────────────────────────
 const CHANNELS = {
@@ -183,18 +190,24 @@ async function ensureEquilotl(log) {
 }
 
 async function runAction(action, log, locationPath) {
-    if (!existsSync(BUNDLED_DIST_DIR)) {
-        throw new Error(`Bundled build not found at ${BUNDLED_DIST_DIR}. This installer was not packaged correctly.`);
-    }
+    const isUninstall = action === "uninstall";
 
-    log("Copying bundled build to a permanent location...");
-    rmSync(STABLE_DIST_DIR, { recursive: true, force: true });
-    cpSync(BUNDLED_DIST_DIR, STABLE_DIST_DIR, { recursive: true });
+    if (!isUninstall && !existsSync(BUNDLED_ASAR)) {
+        throw new Error(`Bundled build not found at ${BUNDLED_ASAR}. This installer was not packaged correctly.`);
+    }
 
     const bin = await ensureEquilotl(log);
     mkdirSync(USER_DATA_DIR, { recursive: true });
 
+    // Discord has to be down before the asar is replaced: a running client
+    // holds it open and Windows refuses the overwrite.
     if (locationPath) await closeDiscordIfRunning(locationPath, log);
+
+    if (!isUninstall) {
+        log("Copying bundled build to a permanent location...");
+        rmSync(STABLE_ASAR, { force: true });
+        cpSync(BUNDLED_ASAR, STABLE_ASAR);
+    }
 
     const args = [`--${action}`];
     if (locationPath) args.push("-location", locationPath);
@@ -205,13 +218,19 @@ async function runAction(action, log, locationPath) {
         env: {
             ...process.env,
             EQUICORD_USER_DATA_DIR: USER_DATA_DIR,
-            EQUICORD_DIRECTORY: STABLE_DIST_DIR,
+            EQUICORD_DIRECTORY: STABLE_ASAR,
             EQUICORD_DEV_INSTALL: "1"
         }
     });
     log(`${action} finished successfully.`);
 
-    if (locationPath && action !== "uninstall") {
+    // Discord no longer requires the old path, so it is safe to reclaim.
+    if (existsSync(LEGACY_DIST_DIR)) {
+        log("Removing the previous loose file install...");
+        rmSync(LEGACY_DIST_DIR, { recursive: true, force: true });
+    }
+
+    if (locationPath && !isUninstall) {
         log("Restarting Discord...");
         restartDiscord(locationPath);
     }

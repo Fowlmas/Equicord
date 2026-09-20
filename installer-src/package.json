@@ -27,8 +27,8 @@
         ],
         "extraResources": [
             {
-                "from": "../dist/desktop",
-                "to": "equicord-dist"
+                "from": "../dist/desktop.asar",
+                "to": "equicord.asar"
             }
         ],
         "win": {

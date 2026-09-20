@@ -68,7 +68,7 @@ jobs:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   gh release view latest || gh release create latest \
-                    --title "Latest" \
+                    --title "Latest ${{ github.sha }}" \
                     --notes "Automatic build, always up to date with the ${{ github.ref_name }} branch." \
                     --target ${{ github.sha }}
 
@@ -76,3 +76,10 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: gh release upload latest --clobber dist/release/*
+
+            # The in-app updater and the installer both read the built commit
+            # from the release title, so it has to track the uploaded build.
+            - name: Stamp release title with the built commit
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: gh release edit latest --title "Latest ${{ github.sha }}"
