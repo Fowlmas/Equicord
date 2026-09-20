@@ -5,7 +5,7 @@ const { execFileSync, execSync } = require("child_process");
 // original-fs bypasses Electron's automatic asar interception, which otherwise
 // opens and caches a handle on any "app.asar" path we merely stat/check for
 // existence — that cached handle then blocks Equilotl from patching it.
-const { createWriteStream, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } = require("original-fs");
+const { createWriteStream, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } = require("original-fs");
 const { join } = require("path");
 const { Readable } = require("stream");
 const { finished } = require("stream/promises");
@@ -142,6 +142,34 @@ async function closeDiscordIfRunning(basePath, log) {
     log("Discord closed.");
 }
 
+// Equicord repatches itself after a Discord host update by turning app.asar
+// into a FOLDER holding index.js + package.json. Equilotl only understands its
+// own single file loader: it calls os.ReadFile on app.asar during unpatch,
+// which fails on a directory and aborts the whole install/repair. Restore the
+// vanilla layout first so Equilotl always starts from a clean install.
+function restoreFolderPatchedInstalls(basePath, log) {
+    let restored = 0;
+
+    for (const name of readdirSync(basePath)) {
+        if (!name.startsWith("app-")) continue;
+
+        const resources = join(basePath, name, "resources");
+        const appAsar = join(resources, "app.asar");
+        const vanillaAsar = join(resources, "_app.asar");
+
+        if (!existsSync(appAsar) || !lstatSync(appAsar).isDirectory()) continue;
+        // Without the backup there is nothing to restore and wiping the folder
+        // would leave an unbootable Discord.
+        if (!existsSync(vanillaAsar)) continue;
+
+        rmSync(appAsar, { recursive: true, force: true });
+        renameSync(vanillaAsar, appAsar);
+        restored++;
+    }
+
+    if (restored) log(`Restored ${restored} install(s) patched by a Discord update.`);
+}
+
 function restartDiscord(basePath) {
     const exeName = `${getProcessName(basePath)}.exe`;
     const updateExe = join(basePath, "Update.exe");
@@ -201,7 +229,10 @@ async function runAction(action, log, locationPath) {
 
     // Discord has to be down before the asar is replaced: a running client
     // holds it open and Windows refuses the overwrite.
-    if (locationPath) await closeDiscordIfRunning(locationPath, log);
+    if (locationPath) {
+        await closeDiscordIfRunning(locationPath, log);
+        restoreFolderPatchedInstalls(locationPath, log);
+    }
 
     if (!isUninstall) {
         log("Copying bundled build to a permanent location...");
