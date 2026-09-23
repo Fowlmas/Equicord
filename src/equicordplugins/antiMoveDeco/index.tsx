@@ -6,35 +6,64 @@
 
 import { UserAreaButton } from "@api/UserArea";
 import { EquicordDevs } from "@utils/constants";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
+import type { VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import { FluxDispatcher, React, SelectedChannelStore, UserStore, useStateFromStores } from "@webpack/common";
+import { AuthenticationStore, ChannelStore, Constants, PermissionsBits, PermissionStore, React, RestAPI, SelectedChannelStore, UserStore, useStateFromStores, VoiceStateStore } from "@webpack/common";
 
 const VoiceChannelActions = findByPropsLazy("selectVoiceChannel");
+const logger = new Logger("AntiMoveDeco");
 
-let enabled = false;
 let targetChannelId: string | null = null;
+let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+const pendingRestores = new Set<string>();
 
-function onVoiceStateUpdate({ voiceStates }: { voiceStates: any[]; }) {
-    if (!enabled || !targetChannelId) return;
+function setTarget(channelId: string | null) {
+    targetChannelId = channelId;
+    clearTimeout(reconnectTimeout);
+}
 
-    const myId = UserStore.getCurrentUser()?.id;
-    if (!myId) return;
+function reconnect() {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = setTimeout(() => {
+        if (!targetChannelId || SelectedChannelStore.getVoiceChannelId() === targetChannelId) return;
 
-    const myState = voiceStates.find(s => s.userId === myId);
-    if (!myState) return;
+        try {
+            VoiceChannelActions.selectVoiceChannel(targetChannelId);
+        } catch (e) {
+            logger.error("Failed to reconnect", e);
+        }
+    }, 500);
+}
 
-    if (myState.channelId !== targetChannelId) {
-        setTimeout(() => {
-            if (enabled && targetChannelId) {
-                try {
-                    VoiceChannelActions?.selectVoiceChannel?.(targetChannelId);
-                } catch (e) {
-                    console.error("[AntiMoveDeco] Failed to reconnect:", e);
-                }
-            }
-        }, 500);
-    }
+function restoreVoice(guildId: string, fields: ("mute" | "deaf")[]) {
+    const toSend = fields.filter(field => !pendingRestores.has(guildId + field));
+    if (!toSend.length) return;
+
+    toSend.forEach(field => pendingRestores.add(guildId + field));
+    RestAPI.patch({
+        url: Constants.Endpoints.GUILD_MEMBER(guildId, UserStore.getCurrentUser().id),
+        body: Object.fromEntries(toSend.map(field => [field, false]))
+    })
+        .catch(e => logger.error("Failed to remove server mute or deafen", e))
+        .finally(() => toSend.forEach(field => pendingRestores.delete(guildId + field)));
+}
+
+function checkServerMute({ channelId, mute, deaf }: Pick<VoiceState, "channelId" | "mute" | "deaf">) {
+    if (!channelId || !mute && !deaf) return;
+
+    const channel = ChannelStore.getChannel(channelId);
+    if (!channel?.guild_id) return;
+
+    const fields: ("mute" | "deaf")[] = [];
+    if (mute && PermissionStore.can(PermissionsBits.MUTE_MEMBERS, channel)) fields.push("mute");
+    if (deaf && PermissionStore.can(PermissionsBits.DEAFEN_MEMBERS, channel)) fields.push("deaf");
+    restoreVoice(channel.guild_id, fields);
+}
+
+function getMyVoiceState() {
+    return VoiceStateStore.getVoiceStateForSession(UserStore.getCurrentUser().id, AuthenticationStore.getSessionId());
 }
 
 function AntiMoveDecoIcon({ enabled }: { enabled: boolean; }) {
@@ -49,33 +78,22 @@ function AntiMoveDecoIcon({ enabled }: { enabled: boolean; }) {
 
 function AntiMoveDecoButton() {
     const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-    const inVoice = useStateFromStores([SelectedChannelStore], () => !!SelectedChannelStore.getVoiceChannelId());
+    const voiceChannelId = useStateFromStores([SelectedChannelStore], () => SelectedChannelStore.getVoiceChannelId());
 
-    if (!inVoice) {
-        if (enabled) {
-            enabled = false;
-            targetChannelId = null;
-        }
-        return null;
-    }
+    if (!voiceChannelId && !targetChannelId) return null;
 
-    const toggle = () => {
-        if (!enabled) {
-            const channelId = SelectedChannelStore.getVoiceChannelId();
-            if (!channelId) return;
-            targetChannelId = channelId;
-            enabled = true;
-        } else {
-            enabled = false;
-            targetChannelId = null;
-        }
-        forceUpdate();
-    };
+    const enabled = !!targetChannelId;
 
     return (
         <UserAreaButton
-            onClick={toggle}
-            tooltipText={enabled ? "Disable AntiMove & Deco" : "Enable AntiMove & Deco"}
+            onClick={() => {
+                setTarget(enabled ? null : voiceChannelId ?? null);
+                forceUpdate();
+
+                const state = !enabled && getMyVoiceState();
+                if (state) checkServerMute(state);
+            }}
+            tooltipText={enabled ? "Disable AntiMove, Deco & Mute" : "Enable AntiMove, Deco & Mute"}
             icon={<AntiMoveDecoIcon enabled={enabled} />}
         />
     );
@@ -83,21 +101,38 @@ function AntiMoveDecoButton() {
 
 export default definePlugin({
     name: "AntiMoveDeco",
-    description: "Adds a button to prevent being moved or disconnected from a voice channel.",
+    description: "Adds a button to prevent being moved, disconnected, server muted or server deafened in a voice channel.",
     authors: [EquicordDevs.Fowlmas],
     dependencies: ["UserAreaAPI"],
 
     userAreaButton: {
-        icon: () => <AntiMoveDecoIcon enabled={enabled} />,
+        icon: () => <AntiMoveDecoIcon enabled={!!targetChannelId} />,
         render: AntiMoveDecoButton
     },
 
-    start() {
-        FluxDispatcher.subscribe("VOICE_STATE_UPDATES", onVoiceStateUpdate);
+    flux: {
+        VOICE_CHANNEL_SELECT({ channelId }: { channelId: string | null; }) {
+            if (!targetChannelId || channelId === targetChannelId) return;
+
+            if (channelId) return setTarget(channelId);
+
+            if (getMyVoiceState()?.channelId) setTarget(null);
+        },
+
+        VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
+            if (!targetChannelId) return;
+
+            const myId = UserStore.getCurrentUser()?.id;
+            const sessionId = AuthenticationStore.getSessionId();
+            const myState = voiceStates.find(s => s.userId === myId && s.sessionId === sessionId);
+
+            if (!myState) return;
+            if (myState.channelId !== targetChannelId) reconnect();
+            else checkServerMute(myState);
+        }
     },
+
     stop() {
-        FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", onVoiceStateUpdate);
-        enabled = false;
-        targetChannelId = null;
+        setTarget(null);
     }
 });
