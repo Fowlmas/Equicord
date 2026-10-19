@@ -11,7 +11,7 @@ import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User, VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import { Menu, React, RelationshipStore, Toasts, UserStore, VoiceStateStore } from "@webpack/common";
+import { Menu, React, RelationshipStore, showToast, UserStore, VoiceStateStore } from "@webpack/common";
 
 type TFollowedUserInfo = {
     lastChannelId: string;
@@ -67,7 +67,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                 if (followedUserInfo?.userId === user.id) {
                     followedUserInfo = null;
                     setChecked(false);
-                    Toasts.show({ message: `Stopped following ${user.globalName ?? user.username}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+                    showToast(`Stopped following ${user.globalName ?? user.username}`, "message");
                     return;
                 }
 
@@ -76,7 +76,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                     userId: user.id
                 };
                 setChecked(true);
-                Toasts.show({ message: `Following ${user.globalName ?? user.username} 🏃‍♂️`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+                showToast(`Following ${user.globalName ?? user.username} 🏃‍♂️`, "success");
             }}
         ></Menu.MenuItem>
     );

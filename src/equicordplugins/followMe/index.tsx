@@ -10,7 +10,7 @@ import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
-import { ChannelStore, Constants, Menu, PermissionsBits, PermissionStore, React, RestAPI, Toasts, useEffect, UserStore, useState } from "@webpack/common";
+import { ChannelStore, Constants, Menu, PermissionsBits, PermissionStore, React, RestAPI, showToast, useEffect, UserStore, useState } from "@webpack/common";
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 
@@ -71,7 +71,7 @@ function followMe(userId: string) {
 
     notifyAll();
     persist().catch(() => { });
-    Toasts.show({ message: `Following me: ${targetName} 🏃‍♂️`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+    showToast(`Following me: ${targetName} 🏃‍♂️`, "success");
 }
 
 function unfollowMe() {
@@ -79,7 +79,7 @@ function unfollowMe() {
     targetId = null; targetName = "";
     notifyAll();
     persist().catch(() => { });
-    Toasts.show({ message: `Stopped forcing ${name} to follow`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+    showToast(`Stopped forcing ${name} to follow`, "message");
 }
 
 function FollowMeIcon({ filled = false }: { filled?: boolean; }) {

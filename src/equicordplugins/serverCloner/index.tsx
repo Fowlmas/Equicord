@@ -13,7 +13,7 @@ import { FormSwitch } from "@components/FormSwitch";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { Button, Forms, GuildStore, IconUtils, Menu, Modal, openModal, React, RestAPI, Select, Toasts, useMemo, useRef, UserStore, useState } from "@webpack/common";
+import { Button, Forms, GuildStore, IconUtils, Menu, Modal, openModal, React, RestAPI, Select, showToast, useMemo, useRef, UserStore, useState } from "@webpack/common";
 
 const PermissionStore = findStoreLazy("PermissionStore");
 const AuthenticationStore = findByPropsLazy("getToken");
@@ -448,10 +448,10 @@ async function cloneServer(
     setProgress(100);
     if (cancelled) {
         log({ text: "═══ Cloning cancelled! ═══", type: "warn" });
-        Toasts.show({ message: "Cloning cancelled.", type: Toasts.Type.FAILURE, id: Toasts.genId() });
+        showToast("Cloning cancelled.", "failure");
     } else {
         log({ text: "═══ Cloning finished! ═══", type: "info" });
-        Toasts.show({ message: "Server cloning finished!", type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+        showToast("Server cloning finished!", "success");
     }
 }
 
