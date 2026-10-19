@@ -11,7 +11,7 @@ import { Switch } from "@components/Switch";
 import { classNameFactory } from "@utils/css";
 import { useForceUpdater } from "@utils/react";
 import { OptionType } from "@utils/types";
-import { React, Select, showToast, TextArea, TextInput, Toasts } from "@webpack/common";
+import { React, Select, showToast, TextArea, TextInput } from "@webpack/common";
 
 import { CORS_PROXY } from "./constants";
 import { fallbackServiceOrder, serviceLabels, ServiceType } from "./types";
@@ -234,6 +234,12 @@ export const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         description: "Only use FileUpload if the file(s) exceed the file size limit.",
         default: true,
+        hidden: true
+    },
+    customDiscordFileSizeLimitMB: {
+        type: OptionType.NUMBER,
+        description: "Manual Discord file size limit in MB. 0 means automatic detection.",
+        default: 0,
         hidden: true
     },
     gofileToken: {
@@ -520,10 +526,10 @@ export function SettingsComponent() {
     const validateShareXConfig = () => {
         try {
             parseShareXConfig(settings.store.sharexConfig || "");
-            showToast("ShareX config is valid", Toasts.Type.SUCCESS);
+            showToast("ShareX config is valid", "success");
         } catch (error) {
             const message = error instanceof Error ? error.message : "Invalid ShareX config";
-            showToast(message, Toasts.Type.FAILURE);
+            showToast(message, "failure");
         }
     };
 
@@ -542,10 +548,10 @@ export function SettingsComponent() {
                 const parsed = parseShareXConfig(content);
                 settings.store.sharexConfig = JSON.stringify(parsed, null, 2);
                 update();
-                showToast("Imported ShareX config", Toasts.Type.SUCCESS);
+                showToast("Imported ShareX config", "success");
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Failed to import ShareX config";
-                showToast(message, Toasts.Type.FAILURE);
+                showToast(message, "failure");
             }
         };
         reader.readAsText(file);
@@ -990,6 +996,14 @@ export function SettingsComponent() {
                     description="Use FileUpload only for files larger than your current Discord upload limit."
                     checked={settings.store.bypassDiscordUploadOnlyOverLimit}
                     onChange={v => settings.store.bypassDiscordUploadOnlyOverLimit = v}
+                />
+
+                <SettingTextInput
+                    name="Discord Limit Override (MB)"
+                    description="Manual Discord file size limit in MB, used when automatic detection is wrong. Leave empty for automatic."
+                    value={settings.store.customDiscordFileSizeLimitMB > 0 ? String(settings.store.customDiscordFileSizeLimitMB) : ""}
+                    onChange={v => settings.store.customDiscordFileSizeLimitMB = v.trim() === "" ? 0 : Number(v)}
+                    placeholder="Auto"
                 />
 
                 <SettingTextInput
