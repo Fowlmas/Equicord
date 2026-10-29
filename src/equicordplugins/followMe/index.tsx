@@ -71,7 +71,7 @@ function followMe(userId: string) {
 
     notifyAll();
     persist().catch(() => { });
-    showToast(`Following me: ${targetName} 🏃‍♂️`, "success");
+    showToast({ text: `Following me: ${targetName} 🏃‍♂️`, variant: "success" });
 }
 
 function unfollowMe() {
@@ -79,7 +79,7 @@ function unfollowMe() {
     targetId = null; targetName = "";
     notifyAll();
     persist().catch(() => { });
-    showToast(`Stopped forcing ${name} to follow`, "message");
+    showToast({ text: `Stopped forcing ${name} to follow` });
 }
 
 function FollowMeIcon({ filled = false }: { filled?: boolean; }) {

@@ -67,7 +67,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                 if (followedUserInfo?.userId === user.id) {
                     followedUserInfo = null;
                     setChecked(false);
-                    showToast(`Stopped following ${user.globalName ?? user.username}`, "message");
+                    showToast({ text: `Stopped following ${user.globalName ?? user.username}` });
                     return;
                 }
 
@@ -76,7 +76,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                     userId: user.id
                 };
                 setChecked(true);
-                showToast(`Following ${user.globalName ?? user.username} 🏃‍♂️`, "success");
+                showToast({ text: `Following ${user.globalName ?? user.username} 🏃‍♂️`, variant: "success" });
             }}
         ></Menu.MenuItem>
     );

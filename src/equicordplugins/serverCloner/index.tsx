@@ -448,10 +448,10 @@ async function cloneServer(
     setProgress(100);
     if (cancelled) {
         log({ text: "═══ Cloning cancelled! ═══", type: "warn" });
-        showToast("Cloning cancelled.", "failure");
+        showToast({ text: "Cloning cancelled.", variant: "critical" });
     } else {
         log({ text: "═══ Cloning finished! ═══", type: "info" });
-        showToast("Server cloning finished!", "success");
+        showToast({ text: "Server cloning finished!", variant: "success" });
     }
 }
 
