@@ -7,7 +7,7 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings, migratePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
-import { RemixIcon } from "@components/Icons";
+import { GifIcon, RemixIcon } from "@components/Icons";
 import { EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { getCurrentChannel } from "@utils/discord";
@@ -74,35 +74,17 @@ const settings = definePluginSettings({
     },
     maxWidth: {
         type: OptionType.NUMBER,
-        default: 1280,
+        default: 1024,
         description: "Maximum auto-fit width."
     },
     maxHeight: {
         type: OptionType.NUMBER,
-        default: 720,
+        default: 576,
         description: "Maximum auto-fit height."
     },
 });
 
 const GIFMAKER_ID = "vc-gifmaker";
-
-function GifMakerIcon({ height = 16, width = 16 }: { height?: number; width?: number; }) {
-    return (
-        <svg
-            aria-hidden="true"
-            role="img"
-            xmlns="http://www.w3.org/2000/svg"
-            width={width}
-            height={height}
-            fill="none"
-            viewBox="0 0 24 24"
-        >
-            <path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 16H5V5h14v14Z" />
-            <path fill="currentColor" d="M8.5 13.5 11 16.51 14.5 12l4.5 6H5l3.5-4.5Z" />
-            <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-        </svg>
-    );
-}
 
 function resolveInitialSize(sourceWidth?: number, sourceHeight?: number, storedWidth?: number, storedHeight?: number): [number, number] {
     return getInitialSize(settings.store.maxWidth, settings.store.maxHeight, sourceWidth, sourceHeight, storedWidth, storedHeight);
@@ -116,8 +98,8 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = (children, props) =
         <Menu.MenuItem
             id={GIFMAKER_ID}
             label="Make GIF"
-            icon={GifMakerIcon}
-            leadingAccessory={{ type: "icon", icon: GifMakerIcon }}
+            icon={GifIcon}
+            leadingAccessory={{ type: "icon", icon: GifIcon }}
             action={() => openModal(modalProps => (
                 <GifMakerModal url={info.url} isVideo={info.isVideo} sourceWidth={info.sourceWidth} sourceHeight={info.sourceHeight} {...modalProps} />
             ))}
@@ -137,8 +119,8 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
         <Menu.MenuItem
             id={GIFMAKER_ID}
             label="Make GIF"
-            icon={GifMakerIcon}
-            leadingAccessory={{ type: "icon", icon: GifMakerIcon }}
+            icon={GifIcon}
+            leadingAccessory={{ type: "icon", icon: GifIcon }}
             action={() => openModal(modalProps => <GifMakerModal url={info.url} isVideo={info.isVideo} sourceWidth={info.sourceWidth} sourceHeight={info.sourceHeight} {...modalProps} />)}
         />
     );
@@ -295,10 +277,7 @@ function GifMakerModal({ url, isVideo, sourceWidth, sourceHeight, ...props }: Re
 
             const { current } = optionsRef;
             createGif(url, isVideo, current).then(blob => {
-                if (gen !== generationRef.current) {
-                    URL.revokeObjectURL(URL.createObjectURL(blob));
-                    return;
-                }
+                if (gen !== generationRef.current) return;
                 setError(null);
                 setGifBlob(blob);
                 setPreviewUrl(prev => {
@@ -315,7 +294,7 @@ function GifMakerModal({ url, isVideo, sourceWidth, sourceHeight, ...props }: Re
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [JSON.stringify(options.captionMode), options.captionText, options.captionSize, options.fontFamily, options.bubbleTipX, options.bubbleTipY, options.bubbleTipBase, options.width, options.height]);
+    }, [options.captionMode, options.captionText, options.captionSize, options.fontFamily, options.bubbleTipX, options.bubbleTipY, options.bubbleTipBase, options.width, options.height]);
 
     const handlePreviewClick = (e: React.MouseEvent<HTMLImageElement>) => {
         if (options.captionMode !== "speechbubble") return;
@@ -491,7 +470,7 @@ function GifMakerModal({ url, isVideo, sourceWidth, sourceHeight, ...props }: Re
 }
 
 function openGifMakerFromItem(item) {
-    const directUrl = typeof item.src === "string" ? item.src : null;
+    const directUrl = typeof item.url === "string" ? item.url : typeof item.src === "string" ? item.src : null;
 
     const candidates = collectCandidateUrls(item);
     const adjustedCandidates = new Set<string>();
